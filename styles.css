@@ -221,6 +221,7 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   grid-template-columns: 1.1fr 0.9fr;
   gap: 24px;
   padding: 32px;
+  margin-top: 15vh;
   border-radius: 24px;
   /* UPDATED: Transparent white with blur */
   border: 1px solid rgba(255, 255, 255, 0.4);
