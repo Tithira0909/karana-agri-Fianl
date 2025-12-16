@@ -22,6 +22,66 @@ body {
   overflow-x: hidden;
 }
 
+/* LOADER */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  transition: opacity 0.5s ease-out;
+}
+
+#loader p {
+  font-family: "Italiana", serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.2rem;
+  color: var(--accent);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.spinner-box {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+}
+
+.circle-border {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: linear-gradient(0deg, rgba(31,107,59,0.1) 33%, rgba(31,107,59,1) 100%);
+  animation: spin 0.8s linear 0s infinite;
+}
+
+.circle-core {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg);
+  border-radius: 50%;
+}
+
+@keyframes spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(359deg); }
+}
+
 img { width: 100%; height: 100%; object-fit: cover; }
 
 h1, h2 {
@@ -139,7 +199,7 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  perspective: 1000px;
+  perspective: 1000px; /* Needed for 3D effect */
   transform-style: preserve-3d;
 }
 
@@ -152,7 +212,6 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   opacity: 0;
   transform: translateY(14px) scale(0.98);
   will-change: transform, opacity;
- 
 }
 
 /* card layout wrapper */
@@ -163,10 +222,12 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   gap: 24px;
   padding: 32px;
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.35);
+  /* UPDATED: Transparent white with blur */
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 10px 15px rgba(0,0,0,0.05);
+  /* UPDATED: Dark text for contrast against light transparent bg */
   color: var(--fg);
 }
 
@@ -175,11 +236,10 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   width: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: none;
-  background: transparent;
-  box-shadow: none;
+  border: 1px solid rgba(36,25,16,0.10);
+  background: rgba(31,107,59,0.06);
+  box-shadow: 0 16px 50px rgba(36,25,16,0.10);
   aspect-ratio: 16 / 10;
- 
 }
 .hero-img img{
   object-fit: contain;
@@ -196,14 +256,15 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   gap: 10px;
   text-align: left;
 
-  /* switch product text to Italiana */
+  /* UPDATED: Italiana font */
   font-family: "Italiana", serif;
 }
 
 .hero-panel-text h2{
   font-size: clamp(1.6rem, 2.3vw, 2.2rem);
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: -0.3px;
+  /* UPDATED: Dark color */
   color: var(--fg);
 }
 
@@ -213,6 +274,7 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   line-height: 1.65;
   opacity: 0.9;
   max-width: 62ch;
+  /* UPDATED: Italiana font & Dark color */
   font-family: "Italiana", serif;
   color: var(--fg);
 }
@@ -230,6 +292,7 @@ section { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
   border-radius: 999px;
   border: 1px solid rgba(36,25,16,0.12);
   background: rgba(254,251,244,0.60);
+  /* UPDATED: Italiana font */
   font-family: "Italiana", serif;
   font-size: 0.78rem;
   text-transform: uppercase;

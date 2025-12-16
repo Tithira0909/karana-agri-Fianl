@@ -47,6 +47,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!imagesToLoad) {
       render();
       setupScroll();
+
+      // Hide loader
+      const loader = document.getElementById("loader");
+      if (loader) {
+        loader.style.opacity = "0";
+        setTimeout(() => loader.remove(), 600);
+      }
     }
   };
 
