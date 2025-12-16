@@ -123,43 +123,65 @@ document.addEventListener("DOMContentLoaded", () => {
           const s = parseFloat(panel.dataset.start || "0");
           const e = parseFloat(panel.dataset.end || "0");
 
-          // show window
-          const local = (progress - s) / (e - s);
+          // New 3D Carousel / Tunnel Logic
+          const Z_DEPTH = 2000; // Starting depth
+          const FADE_IN_DURATION = 0.25;
+          const timeUntilActive = s - progress;
 
-          // Card Stack Effect Logic
-          if (progress < s) {
-            // Future: hidden
-            gsap.set(panel, { opacity: 0, pointerEvents: "none" });
-          } else if (progress >= s && progress <= e) {
-            // Active: Fade in, scale up to 1
-            const fadeIn = gsap.utils.clamp(0, 1, local / 0.15);
-            gsap.set(panel, {
-              opacity: fadeIn,
-              y: (1 - fadeIn) * 14,
-              scale: 0.96 + fadeIn * 0.04,
-              filter: "blur(0px)",
-              zIndex: 10 + i,
-              pointerEvents: "auto"
-            });
-          } else {
-            // Past: progress > e
-            const pastProgress = (progress - e) * 10;
-            const blurAmount = Math.min(30, pastProgress * 20);
-            const scaleAmount = Math.max(0.85, 1 - pastProgress * 0.1);
-            const opacityAmount = Math.max(0, 1 - pastProgress * 1.2);
-
-            if (opacityAmount <= 0) {
-              gsap.set(panel, { opacity: 0, pointerEvents: "none" });
-            } else {
-              gsap.set(panel, {
-                opacity: opacityAmount,
-                scale: scaleAmount,
-                filter: `blur(${blurAmount}px)`,
-                zIndex: 10 + i - 1,
-                pointerEvents: "none"
-              });
-            }
+          // Optimization: If too far future or past, hide
+          if (timeUntilActive > FADE_IN_DURATION) {
+             gsap.set(panel, { opacity: 0, display: "none" });
+             return;
           }
+          if (progress > e + 0.05) {
+             gsap.set(panel, { opacity: 0, display: "none" });
+             return;
+          }
+
+          let z = 0;
+          let opacity = 1;
+          let scale = 1;
+          let blur = 0;
+          let pointerEvents = "none";
+          let zIndex = 0;
+
+          if (progress < s) {
+             // COMING FROM BACK
+             const p = 1 - (timeUntilActive / FADE_IN_DURATION); // 0 to 1
+             z = -Z_DEPTH + (p * Z_DEPTH); // -2000 to 0
+             opacity = Math.pow(p, 2);
+             zIndex = 10 + i;
+             scale = 0.8 + 0.2 * p; // Start slightly smaller
+          } else if (progress <= e) {
+             // ACTIVE
+             z = 0;
+             opacity = 1;
+             scale = 1;
+             pointerEvents = "auto";
+             zIndex = 100;
+          } else {
+             // LEAVING (Fly past camera or fade out moving forward)
+             const timeSinceEnd = progress - e;
+             const p = timeSinceEnd / 0.05; // Quick exit
+
+             // Move towards camera (positive Z)
+             z = p * 500;
+             opacity = 1 - p;
+             scale = 1 + p * 0.5;
+             blur = p * 10;
+             zIndex = 200; // On top of everything as it leaves
+          }
+
+          gsap.set(panel, {
+            opacity: opacity,
+            z: z,
+            scale: scale,
+            display: "block",
+            pointerEvents: pointerEvents,
+            filter: `blur(${blur}px)`,
+            zIndex: zIndex,
+            y: 0 // Reset any previous Y transform
+          });
         });
       },
     });
