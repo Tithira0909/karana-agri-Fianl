@@ -47,6 +47,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!imagesToLoad) {
       render();
       setupScroll();
+
+      // Hide loader
+      const loader = document.getElementById("loader");
+      if (loader) {
+        loader.style.opacity = "0";
+        setTimeout(() => loader.remove(), 600);
+      }
     }
   };
 
@@ -88,8 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const setupScroll = () => {
-    // init panels hidden
-    gsap.set(panels, { opacity: 0, y: 14, scale: 0.98 });
+    // init panels hidden off-screen
+    gsap.set(panels, { opacity: 0, display: "none" });
 
     ScrollTrigger.create({
       trigger: ".hero",
@@ -118,48 +125,80 @@ document.addEventListener("DOMContentLoaded", () => {
         const t = gsap.utils.clamp(0, 1, (progress - titleStart) / (titleEnd - titleStart));
         gsap.set(header, { opacity: 1 - t, y: -t * 30, scale: 1 - t * 0.03 });
 
-        /* 4) Panels come/go until end (based on data-start/end) */
+        /* 4) Panels Horizontal Carousel Logic */
         panels.forEach((panel, i) => {
           const s = parseFloat(panel.dataset.start || "0");
           const e = parseFloat(panel.dataset.end || "0");
+          const dt = e - s;
 
-          // show window
-          const local = (progress - s) / (e - s);
+          // Define the lifecycle of horizontal movement
+          // Enters from Right (100%) at 's'
+          // Exits to Left (-100%) at 'e + dt'
+          // Center (0%) at 'e' (roughly)
+          // Wait, if Center is at 'e', then it stays on screen too long?
+          // Let's align:
+          // At 's': x = 100% (Right Edge)
+          // At 'e': x = 0% (Center) ?? No.
+          // If we want continuous strip:
+          // Panel 1 (0.18-0.26): Center at 0.22.
+          // Panel 2 (0.26-0.34): Center at 0.30.
+          // So center is at (s + e) / 2.
+          // Start Map: s -> 100%
+          // End Map: e + dt -> -100%
+          // Let's verify midpoint: (s + e + dt)/2 = (s + e + e - s)/2 = 2e/2 = e.
+          // So Center is at 'e'.
+          // But (s+e)/2 is 0.22. 'e' is 0.26.
+          // If Center is at 0.26, then Panel 1 is center when Panel 2 enters.
+          // That means Panel 1 and Panel 2 collide at Center at 0.26.
+          // This is NOT side-by-side.
+          // To be side-by-side:
+          // At 0.26, Panel 1 must be Left of Center? Or Panel 2 Right of Center?
+          // If P1 is Center at 0.22, P2 Center at 0.30.
+          // Distance 0.08.
+          // Width of card = 100% (or effective width).
+          // We want shift of 100% every 0.08.
+          // So xPercent should change by 100 every 0.08.
+          // Rate = 100 / 0.08 = 1250 units/progress.
+          // Formula: xPercent = (CenterPoint - progress) * Rate?
+          // CenterPoint for Panel 1 = 0.22.
+          // At 0.22, x = 0.
+          // At 0.14 (0.22-0.08), x = 100.
+          // At 0.30 (0.22+0.08), x = -100.
+          // Let's check Panel 2. Center 0.30.
+          // At 0.30, x=0.
+          // At 0.22, x=100.
+          // So at 0.22: Panel 1 is 0. Panel 2 is 100. (Side by side).
+          // Perfect!
+          // So CenterPoint = (s + e) / 2.
+          // Rate = 100 / (e - s).
+          // Range of visibility: +/- 100% (or slightly more).
 
-          // Card Stack Effect Logic
-          if (progress < s) {
-            // Future: hidden
-            gsap.set(panel, { opacity: 0, pointerEvents: "none" });
-          } else if (progress >= s && progress <= e) {
-            // Active: Fade in, scale up to 1
-            const fadeIn = gsap.utils.clamp(0, 1, local / 0.15);
-            gsap.set(panel, {
-              opacity: fadeIn,
-              y: (1 - fadeIn) * 14,
-              scale: 0.96 + fadeIn * 0.04,
-              filter: "blur(0px)",
-              zIndex: 10 + i,
-              pointerEvents: "auto"
-            });
-          } else {
-            // Past: progress > e
-            const pastProgress = (progress - e) * 10;
-            const blurAmount = Math.min(30, pastProgress * 20);
-            const scaleAmount = Math.max(0.85, 1 - pastProgress * 0.1);
-            const opacityAmount = Math.max(0, 1 - pastProgress * 1.2);
+          const centerPoint = (s + e) / 2;
+          const duration = e - s; // 0.08 roughly
+          const rate = 100 / duration; // ~1250
 
-            if (opacityAmount <= 0) {
-              gsap.set(panel, { opacity: 0, pointerEvents: "none" });
-            } else {
-              gsap.set(panel, {
-                opacity: opacityAmount,
-                scale: scaleAmount,
-                filter: `blur(${blurAmount}px)`,
-                zIndex: 10 + i - 1,
-                pointerEvents: "none"
-              });
-            }
+          // Calculate xPercent
+          // Positive if progress < centerPoint (Right)
+          // Negative if progress > centerPoint (Left)
+          const xPercent = (centerPoint - progress) * rate;
+
+          // Optimization: Hide if significantly off-screen
+          // e.g. > 150% or < -150%
+          if (xPercent > 180 || xPercent < -180) {
+             gsap.set(panel, { display: "none" });
+             return;
           }
+
+          gsap.set(panel, {
+            xPercent: xPercent,
+            y: 0,
+            z: 0,
+            scale: 1,
+            opacity: 1,
+            display: "block",
+            filter: "none",
+            pointerEvents: "auto"
+          });
         });
       },
     });
